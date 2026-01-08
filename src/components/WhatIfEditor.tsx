@@ -59,6 +59,7 @@ export function WhatIfEditor({
       }}
     >
       <div className="max-w-7xl mx-auto px-6 py-12">
+        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <GitCompare size={20} style={{ color: "var(--accent-primary)" }} />
@@ -81,6 +82,7 @@ export function WhatIfEditor({
           </button>
         </div>
 
+        {/* Prompt editor */}
         <textarea
           value={editPrompt}
           onChange={(e) => setEditPrompt(e.target.value)}
@@ -109,92 +111,133 @@ export function WhatIfEditor({
           </span>
         </button>
 
+        {/* Comparison */}
         {previousOutput && currentOutput && (
-          <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div
-              className="rounded-2xl p-6"
-              style={{
-                background: "var(--bg-card)",
-                border: "1px solid var(--border-color)",
-              }}
-            >
-              <h4
+          <>
+            {/* Legend */}
+            {showDiff && (
+              <div className="mt-6 flex gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <span
+                    style={{
+                      background: "rgba(34,197,94,0.2)",
+                      padding: "4px 8px",
+                      borderRadius: "6px",
+                      color: "#15803d",
+                    }}
+                  >
+                    Added
+                  </span>
+                  <span style={{ color: "var(--text-secondary)" }}>
+                    New content
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span
+                    style={{
+                      background: "rgba(239,68,68,0.2)",
+                      padding: "4px 8px",
+                      borderRadius: "6px",
+                      color: "#b91c1c",
+                      textDecoration: "line-through",
+                    }}
+                  >
+                    Removed
+                  </span>
+                  <span style={{ color: "var(--text-secondary)" }}>
+                    Deleted content
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div
+                className="rounded-2xl p-6"
                 style={{
-                  fontWeight: 600,
-                  fontSize: "0.85rem",
-                  marginBottom: "0.75rem",
-                  color: "var(--text-secondary)",
+                  background: "var(--bg-card)",
+                  border: "1px solid var(--border-color)",
                 }}
               >
-                Previous Output
-              </h4>
-              <p style={{ fontSize: "0.95rem" }}>{previousOutput}</p>
-            </div>
+                <h4
+                  style={{
+                    fontWeight: 600,
+                    fontSize: "0.85rem",
+                    marginBottom: "0.75rem",
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  Previous Output
+                </h4>
+                <p style={{ fontSize: "0.95rem" }}>{previousOutput}</p>
+              </div>
 
-            <div
-              className="rounded-2xl p-6"
-              style={{
-                background: "var(--bg-card)",
-                border: "1px solid var(--accent-primary)",
-              }}
-            >
-              <h4
+              <div
+                className="rounded-2xl p-6"
                 style={{
-                  fontWeight: 600,
-                  fontSize: "0.85rem",
-                  marginBottom: "0.75rem",
-                  color: "var(--accent-primary)",
+                  background: "var(--bg-card)",
+                  border: "1px solid var(--accent-primary)",
                 }}
               >
-                New Output
-              </h4>
+                <h4
+                  style={{
+                    fontWeight: 600,
+                    fontSize: "0.85rem",
+                    marginBottom: "0.75rem",
+                    color: "var(--accent-primary)",
+                  }}
+                >
+                  New Output
+                </h4>
 
-              {!showDiff ? (
-                <p style={{ fontSize: "0.95rem" }}>{currentOutput}</p>
-              ) : (
-                <p style={{ fontSize: "0.95rem", lineHeight: "1.6" }}>
-                  {diff.map((item, index) => {
-                    if (item.type === "added") {
-                      return (
-                        <span
-                          key={index}
-                          style={{
-                            background: "rgba(34,197,94,0.2)",
-                            color: "#15803d",
-                            padding: "2px 6px",
-                            borderRadius: "6px",
-                            marginRight: "4px",
-                          }}
-                        >
-                          {item.word}
-                        </span>
-                      );
-                    }
+                {!showDiff ? (
+                  <p style={{ fontSize: "0.95rem" }}>{currentOutput}</p>
+                ) : (
+                  <p style={{ fontSize: "0.95rem", lineHeight: "1.6" }}>
+                    {diff.map((item, index) => {
+                      if (item.type === "added") {
+                        return (
+                          <span
+                            key={index}
+                            style={{
+                              background: "rgba(34,197,94,0.2)",
+                              color: "#15803d",
+                              padding: "2px 6px",
+                              borderRadius: "6px",
+                              marginRight: "4px",
+                            }}
+                          >
+                            {item.word}
+                          </span>
+                        );
+                      }
 
-                    if (item.type === "removed") {
-                      return (
-                        <span
-                          key={index}
-                          style={{
-                            background: "rgba(239,68,68,0.2)",
-                            color: "#b91c1c",
-                            padding: "2px 6px",
-                            borderRadius: "6px",
-                            marginRight: "4px",
-                            textDecoration: "line-through",
-                          }}
-                        >
-                          {item.word}
-                        </span>
-                      );
-                    }
+                      if (item.type === "removed") {
+                        return (
+                          <span
+                            key={index}
+                            style={{
+                              background: "rgba(239,68,68,0.2)",
+                              color: "#b91c1c",
+                              padding: "2px 6px",
+                              borderRadius: "6px",
+                              marginRight: "4px",
+                              textDecoration: "line-through",
+                            }}
+                          >
+                            {item.word}
+                          </span>
+                        );
+                      }
 
-                    return <span key={index}> {item.word} </span>;
-                  })}
-                </p>
-              )}
+                      return <span key={index}> {item.word} </span>;
+                    })}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>
