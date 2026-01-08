@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Navigation } from "./components/Navigation";
 import { HeroSection } from "./components/HeroSection";
-import { MainInterface } from "./components/MainInterface";
-import { Dashboard } from "./components/Dashboard";
+import { ExplainableMainInterface } from "./components/ExplainableMainInterface";
+import { EnhancedDashboard } from "./components/EnhancedDashboard";
 import { FeaturesPage } from "./components/FeaturesPage";
 import { DocumentationPage } from "./components/DocumentationPage";
 import { SupportPage } from "./components/SupportPage";
@@ -40,10 +40,10 @@ export default function App() {
       {currentPage === 'main' ? (
         <>
           <HeroSection onGetStarted={handleGetStarted} theme={theme} />
-          <MainInterface featuresRef={featuresRef} />
+          <ExplainableMainInterface featuresRef={featuresRef} />
         </>
       ) : currentPage === 'dashboard' ? (
-        <Dashboard />
+        <EnhancedDashboard />
       ) : currentPage === 'features' ? (
         <FeaturesPage />
       ) : currentPage === 'documentation' ? (

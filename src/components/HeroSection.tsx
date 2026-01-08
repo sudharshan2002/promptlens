@@ -97,7 +97,8 @@ export function HeroSection({ onGetStarted, theme = 'light' }: HeroSectionProps)
                 fontSize: '1.0625rem',
                 fontWeight: 400,
                 transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                letterSpacing: '-0.011em'
+                letterSpacing: '-0.011em',
+                cursor: 'pointer'
               }}
               onMouseEnter={(e) => e.currentTarget.style.opacity = '0.88'}
               onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
@@ -117,7 +118,8 @@ export function HeroSection({ onGetStarted, theme = 'light' }: HeroSectionProps)
                 borderColor: 'var(--border-strong)',
                 backgroundColor: 'transparent',
                 transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                letterSpacing: '-0.011em'
+                letterSpacing: '-0.011em',
+                cursor: 'pointer'
               }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-secondary)'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}

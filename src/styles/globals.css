@@ -407,3 +407,90 @@
   background: var(--accent-primary);
   color: white;
 }
+
+/* Cursor pointer for interactive elements */
+button,
+[role="button"],
+[type="button"],
+[type="submit"],
+[type="reset"],
+a[href],
+select,
+input[type="checkbox"],
+input[type="radio"],
+input[type="range"],
+input[type="file"],
+label[for],
+summary,
+[tabindex]:not([tabindex="-1"]),
+[onclick],
+.clickable,
+.cursor-pointer,
+.interactive,
+.btn,
+.button,
+.card:hover,
+.nav-link,
+.menu-item,
+.dropdown-item,
+.toggle,
+.switch,
+.checkbox,
+.radio,
+.tab,
+.accordion-trigger,
+.dialog-trigger,
+.popover-trigger {
+  cursor: pointer !important;
+}
+
+/* Disabled elements should show not-allowed cursor */
+button:disabled,
+[disabled],
+.disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Text input elements should show text cursor */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+textarea,
+[contenteditable="true"] {
+  cursor: text;
+}
+
+/* Resize cursor for resizable elements */
+.resizable,
+[style*="resize"] {
+  cursor: nwse-resize;
+}
+
+/* Grab cursor for draggable elements */
+.draggable,
+[draggable="true"] {
+  cursor: grab;
+}
+
+.draggable:active,
+[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+/* Help cursor for help elements */
+[title],
+.help,
+abbr[title] {
+  cursor: help;
+}
