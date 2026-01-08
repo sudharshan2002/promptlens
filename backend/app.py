@@ -1,67 +1,102 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from dotenv import load_dotenv
+import os
+
+from openai import OpenAI
+
+# -------------------------
+# App setup
+# -------------------------
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
-@app.route("/generate", methods=["POST"])
-def generate():
-    data = request.get_json()
-    prompt = data.get("prompt", "")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-    words = prompt.lower().split()
-    explanations = []
+if not OPENAI_API_KEY:
+    raise RuntimeError("OPENAI_API_KEY not found in .env")
 
-    if "cyberpunk" in words or "neon" in words:
-        explanations.append({
-            "prompt_part": "cyberpunk",
-            "effect": "Defines a futuristic, neon-lit visual style"
-        })
+client = OpenAI(api_key=OPENAI_API_KEY)
 
-    if "rainy" in words or "rain" in words:
-        explanations.append({
-            "prompt_part": "rainy",
-            "effect": "Adds mood, reflections, and atmosphere"
-        })
+# -------------------------
+# Health check API
+# -------------------------
+@app.route("/api/health", methods=["GET"])
+def health():
+    return jsonify({
+        "status": "ok",
+        "service": "PromptLens backend"
+    })
 
-    if "night" in words or "midnight" in words:
-        explanations.append({
-            "prompt_part": "night",
-            "effect": "Sets low-light conditions and dramatic contrast"
-        })
+# -------------------------
+# AI Generate API
+# -------------------------
+@app.route("/api/ai/generate", methods=["POST"])
+def generate_ai():
+    data = request.get_json(force=True)
+    prompt = data.get("prompt", "").strip()
 
-    if "street" in words or "city" in words:
-        explanations.append({
-            "prompt_part": "street",
-            "effect": "Specifies the urban environment"
-        })
+    if not prompt:
+        return jsonify({"error": "Prompt is required"}), 400
 
-    if not explanations:
-        explanations.append({
-            "prompt_part": prompt.split()[0] if prompt else "",
-            "effect": "General prompt component"
-        })
+    try:
+        # ---- OpenAI call ----
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are an AI assistant that expands visual prompts "
+                        "into cinematic, descriptive scenes and analyses them."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            temperature=0.7
+        )
 
-    response = {
-        "generated_text": (
-            "A cinematic scene depicting "
-            f"{prompt}. Neon lights reflect off wet surfaces, "
-            "creating a moody, atmospheric cyberpunk aesthetic."
-        ),
-        "explanations": explanations,
-        "segments": [
+        generated_text = response.choices[0].message.content.strip()
+
+        # ---- Simple analysis (project-friendly) ----
+        segments = [
+            {"type": "Style", "value": "Cinematic / Visual"},
+            {"type": "Prompt", "value": prompt}
+        ]
+
+        explanations = [
             {
-                "type": "Style",
-                "value": "Dark cyberpunk city"
-            },
-            {
-                "type": "Subject",
-                "value": "Girl with neon umbrella"
+                "prompt_part": "scene description",
+                "effect": "Expands the prompt into a vivid visual narrative"
             }
         ]
-    }
 
-    return jsonify(response)
+        return jsonify({
+            "choices": [
+                {
+                    "index": 0,
+                    "text": generated_text,
+                    "analysis": {
+                        "segments": segments,
+                        "explanations": explanations
+                    }
+                }
+            ]
+        })
 
+    except Exception as e:
+        return jsonify({
+            "error": "AI generation failed",
+            "details": str(e)
+        }), 500
+
+# -------------------------
+# Run server
+# -------------------------
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="127.0.0.1", port=5000, debug=True)

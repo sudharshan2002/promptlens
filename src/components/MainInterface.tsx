@@ -18,21 +18,23 @@ export function MainInterface({ featuresRef }: MainInterfaceProps) {
     setLoading(true);
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt }),
-      });
+      const response = await fetch(
+        "http://127.0.0.1:5000/api/ai/generate",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt }),
+        }
+      );
 
       const data = await response.json();
-      console.log("Backend response:", data);
+
+      const newText = data.choices[0].text;
 
       setPreviousText(generatedText);
-      setGeneratedText(data.generated_text);
+      setGeneratedText(newText);
     } catch (error) {
-      console.error("Error calling backend:", error);
+      console.error("AI API error:", error);
     } finally {
       setLoading(false);
     }
@@ -43,7 +45,6 @@ export function MainInterface({ featuresRef }: MainInterfaceProps) {
       className="flex-1 overflow-y-auto"
       style={{ background: "var(--bg-primary)" }}
     >
-      {/* Prompt Interface Section */}
       <div
         ref={featuresRef}
         className="px-6 py-20 border-b"
@@ -57,21 +58,10 @@ export function MainInterface({ featuresRef }: MainInterfaceProps) {
                 fontWeight: 600,
                 fontSize: "clamp(1.75rem, 4vw, 2.5rem)",
                 color: "var(--text-primary)",
-                letterSpacing: "-0.025em",
               }}
             >
               Try it yourself
             </h2>
-            <p
-              style={{
-                fontSize: "1.0625rem",
-                color: "var(--text-secondary)",
-                lineHeight: "1.5",
-                fontWeight: 400,
-              }}
-            >
-              See how PromptLens analyzes and improves your AI prompts
-            </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -81,33 +71,8 @@ export function MainInterface({ featuresRef }: MainInterfaceProps) {
         </div>
       </div>
 
-      {/* What-If Editor Section */}
       <div className="px-6 py-20">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2
-              className="mb-4"
-              style={{
-                fontWeight: 600,
-                fontSize: "clamp(1.75rem, 4vw, 2.5rem)",
-                color: "var(--text-primary)",
-                letterSpacing: "-0.025em",
-              }}
-            >
-              What-If Analysis
-            </h2>
-            <p
-              style={{
-                fontSize: "1.0625rem",
-                color: "var(--text-secondary)",
-                lineHeight: "1.5",
-                fontWeight: 400,
-              }}
-            >
-              Experiment with different scenarios and see how they affect your prompts
-            </p>
-          </div>
-
           <WhatIfEditor
             onApply={handleGenerate}
             previousOutput={previousText}
