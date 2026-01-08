@@ -235,14 +235,17 @@ Collect structured feedback for research:
 
 ### Backend
 
-| Technology     | Purpose          | Version |
-| -------------- | ---------------- | ------- |
-| **Python**     | Runtime          | 3.10+   |
-| **FastAPI**    | API Framework    | 0.104+  |
-| **Pydantic**   | Data Validation  | 2.0+    |
-| **spaCy/NLTK** | NLP Processing   | Latest  |
-| **OpenAI**     | Text Generation  | API v1  |
-| **Replicate**  | Image Generation | API v1  |
+| Technology       | Purpose               | Version |
+| ---------------- | --------------------- | ------- |
+| **Python**       | Runtime               | 3.10+   |
+| **FastAPI**      | API Framework         | 0.109+  |
+| **Pydantic**     | Data Validation       | 2.0+    |
+| **spaCy/NLTK**   | NLP Processing        | Latest  |
+| **OpenAI**       | Text Generation       | API v1  |
+| **Pollinations** | Image Generation      | FREE    |
+| **python-jose**  | JWT Authentication    | Latest  |
+| **passlib**      | Password Hashing      | Latest  |
+| **httpx**        | Async HTTP Client     | Latest  |
 
 ### Design System
 
@@ -316,24 +319,57 @@ The backend API will be available at `http://localhost:8000`.
 Create a `.env` file in the `backend/` directory:
 
 ```env
-# OpenAI Configuration (for text generation)
+# OpenAI Configuration (for text generation - OPTIONAL)
+# If not configured, system uses mock responses for demonstration
 OPENAI_API_KEY=your_openai_api_key_here
 
-# Replicate Configuration (for image generation)
-REPLICATE_API_TOKEN=your_replicate_api_token_here
+# Image Generation (FREE - No API key needed!)
+# Uses Pollinations.ai by default
+USE_FREE_IMAGE_API=true
+
+# JWT Authentication
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_DAYS=7
+
+# Google OAuth (Optional - for social login)
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
 
 # Server Configuration
 CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://localhost:8080
 ```
 
+Also create a `.env` file in the project root for frontend:
+
+```env
+# Frontend Environment Variables
+VITE_API_URL=http://localhost:8000
+VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+```
+
 ### API Keys
 
-| Service       | Purpose                             | Get Key                                            |
-| ------------- | ----------------------------------- | -------------------------------------------------- |
-| **OpenAI**    | Text generation (GPT-4)             | [platform.openai.com](https://platform.openai.com) |
-| **Replicate** | Image generation (Stable Diffusion) | [replicate.com](https://replicate.com)             |
+| Service          | Purpose          | Required | Cost    | Get Key                                                      |
+| ---------------- | ---------------- | -------- | ------- | ------------------------------------------------------------ |
+| **Pollinations** | Image Generation | No       | FREE    | No key needed - works out of the box!                        |
+| **OpenAI**       | Text Generation  | Optional | Paid    | [platform.openai.com](https://platform.openai.com)           |
+| **Google OAuth** | Social Login     | Optional | FREE    | [console.cloud.google.com](https://console.cloud.google.com) |
 
-> **Note**: If API keys are not configured, the system will use mock responses for demonstration purposes.
+> **Note**: The system works without any API keys! Image generation uses the FREE Pollinations.ai service, and text generation falls back to mock responses for demonstration purposes.
+
+### Google OAuth Setup (Optional)
+
+To enable "Sign in with Google":
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Create a new project or select existing
+3. Navigate to **APIs & Services > Credentials**
+4. Create **OAuth 2.0 Client ID** (Web application)
+5. Add authorized JavaScript origins:
+   - `http://localhost:5173`
+   - `http://localhost:3000`
+6. Copy Client ID and Client Secret to your `.env` files
 
 ---
 
@@ -351,6 +387,51 @@ http://localhost:8000
 - **ReDoc**: `http://localhost:8000/redoc`
 
 ### Endpoints
+
+#### Authentication
+
+```http
+POST /auth/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "securepassword123",
+  "name": "John Doe"
+}
+```
+
+**Response:**
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIs...",
+  "token_type": "bearer",
+  "user": {
+    "id": "uuid-string",
+    "email": "user@example.com",
+    "name": "John Doe"
+  }
+}
+```
+
+```http
+POST /auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "securepassword123"
+}
+```
+
+```http
+POST /auth/google
+Content-Type: application/json
+
+{
+  "token": "google-oauth-token"
+}
+```
 
 #### Health Check
 
@@ -598,12 +679,14 @@ promptlens/
 ├── backend/                   # Python FastAPI backend
 │   ├── app.py                # Main FastAPI application
 │   ├── models.py             # Pydantic data models
+│   ├── auth_service.py       # JWT & Google OAuth authentication
 │   ├── nlp_service.py        # NLP segmentation service
 │   ├── text_service.py       # Text generation & explanation
-│   ├── image_service.py      # Image generation & explanation
+│   ├── image_service.py      # Image generation (Pollinations.ai)
 │   ├── whatif_service.py     # What-if analysis service
 │   ├── metrics_service.py    # Metrics collection service
 │   ├── requirements.txt      # Python dependencies
+│   ├── users.json            # User database (auto-created)
 │   └── .env                  # Environment variables (create this)
 │
 ├── src/                       # React frontend source
@@ -612,6 +695,7 @@ promptlens/
 │   ├── index.css             # Tailwind imports
 │   │
 │   ├── components/           # React components
+│   │   ├── AuthPage.tsx      # Login/Register page
 │   │   ├── PromptInput.tsx   # Prompt input field
 │   │   ├── OutputPanel.tsx   # Generation output display
 │   │   ├── WhatIfEditor.tsx  # What-if comparison tool
@@ -626,7 +710,18 @@ promptlens/
 │   │
 │   ├── services/             # API integration
 │   │   ├── api.service.ts    # Backend API calls
-│   │   └── api.types.ts      # TypeScript interfaces
+│   │   └── index.ts          # Service exports
+│   │
+│   ├── hooks/                # React hooks
+│   │   ├── useSession.ts     # Session management
+│   │   └── index.ts          # Hook exports
+│   │
+│   ├── types/                # TypeScript definitions
+│   │   ├── api.types.ts      # API interfaces
+│   │   └── index.ts          # Type exports
+│   │
+│   ├── context/              # React context
+│   │   └── AuthContext.tsx   # Authentication state
 │   │
 │   └── styles/               # Global styles
 │       └── globals.css       # CSS custom properties
@@ -700,11 +795,12 @@ This project is developed for academic purposes as part of a Final Year Project 
 ## 🙏 Acknowledgements
 
 - **IIT** - Informatics Institute of Technology (affiliated with University of Westminster)
+- **Pollinations.ai** - FREE AI image generation API
 - **OpenAI** - GPT API for text generation
-- **Replicate** - Stable Diffusion for image generation
 - **Radix UI** - Accessible component primitives
 - **Tailwind CSS** - Utility-first CSS framework
 - **FastAPI** - Modern Python web framework
+- **Google** - OAuth authentication services
 
 ---
 
