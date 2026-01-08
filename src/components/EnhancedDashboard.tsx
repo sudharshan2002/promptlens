@@ -5,31 +5,63 @@
 
 import { TrustMetricsDashboard } from './TrustMetricsDashboard';
 
+// API Base URL
+const API_BASE_URL = 'http://127.0.0.1:8000';
+
 export function EnhancedDashboard() {
-  const handleExport = (format: 'csv' | 'json') => {
-    // In production, this would call the API to export metrics
+  const handleExport = async (format: 'csv' | 'json') => {
     console.log(`Exporting metrics as ${format}`);
     
-    // Mock CSV export
-    if (format === 'csv') {
-      const csvContent = `date,trustScore,transparencyScore,qualityScore,sessions
-2026-01-01,3.8,3.5,4.0,32
-2026-01-02,3.9,3.7,4.1,45
-2026-01-03,4.1,3.9,4.0,38
-2026-01-04,4.0,4.0,4.2,41
-2026-01-05,4.2,4.1,4.3,52
-2026-01-06,4.3,4.2,4.4,48
-2026-01-07,4.4,4.3,4.5,41`;
+    try {
+      // Fetch real data from the API
+      const response = await fetch(`${API_BASE_URL}/metrics/summary`);
       
-      const blob = new Blob([csvContent], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `promptlens-metrics-${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      if (!response.ok) {
+        throw new Error('Failed to fetch metrics');
+      }
+      
+      const data = await response.json();
+      
+      if (format === 'json') {
+        // Export as JSON
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `promptlens-metrics-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      } else {
+        // Export as CSV
+        const metrics = data.metrics || {};
+        const csvHeaders = 'metric,value';
+        const csvRows = [
+          csvHeaders,
+          `total_sessions,${metrics.total_sessions || 0}`,
+          `average_trust_score,${metrics.average_trust_score?.toFixed(2) || 'N/A'}`,
+          `average_transparency_score,${metrics.average_transparency_score?.toFixed(2) || 'N/A'}`,
+          `average_understanding_score,${metrics.average_understanding_score?.toFixed(2) || 'N/A'}`,
+          `average_usefulness_score,${metrics.average_usefulness_score?.toFixed(2) || 'N/A'}`,
+          `total_interactions,${metrics.total_interactions || 0}`,
+          `average_time_spent_seconds,${metrics.average_time_spent_seconds?.toFixed(0) || 'N/A'}`,
+          `export_date,${new Date().toISOString()}`,
+        ].join('\n');
+        
+        const blob = new Blob([csvRows], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `promptlens-metrics-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export metrics. Please ensure the backend is running.');
     }
   };
 

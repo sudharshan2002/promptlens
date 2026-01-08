@@ -132,16 +132,32 @@ export function ExplainableImageOutput({
     return segments.find(s => s.id === id);
   }, [segments]);
 
-  // Download image
-  const handleDownload = useCallback(() => {
+  // Download image - handles cross-origin images
+  const handleDownload = useCallback(async () => {
     if (!imageUrl) return;
     
-    const link = document.createElement('a');
-    link.href = imageUrl;
-    link.download = `promptlens-generated-${Date.now()}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      // Fetch the image as a blob to handle cross-origin
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      
+      // Create object URL from blob
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `promptlens-generated-${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the object URL
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Download failed:', error);
+      // Fallback: open in new tab
+      window.open(imageUrl, '_blank');
+    }
   }, [imageUrl]);
 
   // Get mapping for hovered segment

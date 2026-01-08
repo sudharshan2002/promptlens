@@ -35,6 +35,10 @@ from text_service import generate_text, generate_text_mock, explain_text
 from image_service import generate_image, generate_image_mock, explain_image
 from whatif_service import analyze_whatif
 from metrics_service import submit_metrics, get_metrics_summary
+from auth_service import (
+    register_user, login_user, google_auth, get_current_user,
+    UserCreate, UserLogin, GoogleAuthRequest, TokenResponse, UserResponse
+)
 
 
 # ============================================================
@@ -214,16 +218,11 @@ async def generate_image_endpoint(request: ImageGenerateRequest):
     """
     Generate an image from a segmented prompt.
     Returns image URL with heatmap data showing segment contributions.
+    Uses FREE Pollinations.ai API by default (no API key needed).
     """
     try:
-        # Check if we should use mock
-        api_token = os.getenv("REPLICATE_API_TOKEN", "")
-        use_mock = not api_token or api_token == "your_replicate_api_token_here"
-        
-        if use_mock:
-            return await generate_image_mock(request)
-        else:
-            return await generate_image(request)
+        # generate_image now handles free API internally
+        return await generate_image(request)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Image generation failed: {str(e)}")
 
@@ -420,6 +419,79 @@ async def legacy_generate(request: Request):
 
 # ============================================================
 # RUN SERVER
+# ============================================================
+
+# ============================================================
+# AUTHENTICATION ENDPOINTS
+# ============================================================
+
+@app.post("/auth/register", response_model=TokenResponse, tags=["Authentication"])
+async def register_endpoint(request: UserCreate):
+    """
+    Register a new user account.
+    Returns access token and user data on success.
+    """
+    result, error = await register_user(request)
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    return result
+
+
+@app.post("/auth/login", response_model=TokenResponse, tags=["Authentication"])
+async def login_endpoint(request: UserLogin):
+    """
+    Login with email and password.
+    Returns access token and user data on success.
+    """
+    result, error = await login_user(request)
+    if error:
+        raise HTTPException(status_code=401, detail=error)
+    return result
+
+
+@app.post("/auth/google", response_model=TokenResponse, tags=["Authentication"])
+async def google_auth_endpoint(request: GoogleAuthRequest):
+    """
+    Authenticate with Google OAuth.
+    Creates account if user doesn't exist.
+    Returns access token and user data on success.
+    """
+    result, error = await google_auth(request.credential)
+    if error:
+        raise HTTPException(status_code=401, detail=error)
+    return result
+
+
+@app.get("/auth/me", response_model=UserResponse, tags=["Authentication"])
+async def get_me_endpoint(request: Request):
+    """
+    Get current authenticated user.
+    Requires valid access token in Authorization header.
+    """
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
+    
+    token = auth_header.replace("Bearer ", "")
+    result, error = await get_current_user(token)
+    if error:
+        raise HTTPException(status_code=401, detail=error)
+    return result
+
+
+@app.post("/auth/logout", tags=["Authentication"])
+async def logout_endpoint():
+    """
+    Logout current user.
+    Client should discard the access token.
+    """
+    # JWT tokens are stateless, so we just return success
+    # Client should remove the token from storage
+    return {"message": "Logged out successfully"}
+
+
+# ============================================================
+# MAIN ENTRY POINT
 # ============================================================
 if __name__ == "__main__":
     import uvicorn

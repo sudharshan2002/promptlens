@@ -32,7 +32,7 @@
 
 ## 🎯 Overview
 
-**PromptLens** is an academic research prototype developed as part of a Final Year Project (FYP) at SLIIT. The system provides an interactive interface for understanding how generative AI models (text and image) interpret and respond to user prompts through visual explanations.
+**PromptLens** is an academic research prototype developed as part of a Final Year Project (FYP) at IIT (Informatics Institute of Technology) affiliated with the University of Westminster. The system provides an interactive interface for understanding how generative AI models (text and image) interpret and respond to user prompts through visual explanations.
 
 ### Key Objectives
 
@@ -691,7 +691,7 @@ This is an academic project. Contributions are welcome for:
 
 ## 📄 License
 
-This project is developed for academic purposes as part of a Final Year Project at SLIIT.
+This project is developed for academic purposes as part of a Final Year Project at IIT (Informatics Institute of Technology).
 
 **MIT License** - See [LICENSE](LICENSE) file for details.
 
@@ -699,7 +699,7 @@ This project is developed for academic purposes as part of a Final Year Project 
 
 ## 🙏 Acknowledgements
 
-- **SLIIT** - Sri Lanka Institute of Information Technology
+- **IIT** - Informatics Institute of Technology (affiliated with University of Westminster)
 - **OpenAI** - GPT API for text generation
 - **Replicate** - Stable Diffusion for image generation
 - **Radix UI** - Accessible component primitives
@@ -710,9 +710,11 @@ This project is developed for academic purposes as part of a Final Year Project 
 
 ## 📞 Contact
 
-**Project Author**: [Your Name]  
-**Institution**: SLIIT - Sri Lanka Institute of Information Technology  
-**Program**: BSc (Hons) in Information Technology  
+**Project Author**: Sudharshan Ravichandran  
+**Student ID**: 20221703  
+**Email**: sudharshana.20221703@iit.ac.lk  
+**Institution**: IIT - Informatics Institute of Technology (affiliated with University of Westminster)  
+**Program**: BEng (Hons) Software Engineering
 **Year**: Final Year Project 2024/2025
 
 ---

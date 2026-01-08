@@ -1,6 +1,7 @@
 """
 PromptLens Backend - Image Generation Service
-Handles image generation using Replicate API (Stable Diffusion)
+Handles image generation using FREE Pollinations.ai API (no API key needed!)
+Falls back to Replicate API if configured.
 """
 
 import os
@@ -9,8 +10,10 @@ import uuid
 import base64
 import httpx
 import random
+import asyncio
 from datetime import datetime
 from typing import List, Dict, Optional
+from urllib.parse import quote
 from models import (
     PromptSegment,
     ImageGenerateRequest,
@@ -24,14 +27,69 @@ from models import (
 
 async def generate_image(request: ImageGenerateRequest) -> ImageGenerateResponse:
     """
-    Generate image using Replicate API (Stable Diffusion) and create heatmap data.
+    Generate image using FREE Pollinations.ai API (no API key required!)
+    Falls back to Replicate if API token is configured.
     """
     api_token = os.getenv("REPLICATE_API_TOKEN")
+    use_free_api = os.getenv("USE_FREE_IMAGE_API", "true").lower() == "true"
     
-    if not api_token or api_token == "your_replicate_api_token_here":
-        # Use mock generation if no API key
-        return await generate_image_mock(request)
+    # Use FREE Pollinations.ai API (default) - NO API KEY NEEDED!
+    if use_free_api or not api_token or api_token == "your_replicate_api_token_here":
+        return await generate_image_pollinations(request)
     
+    # Use Replicate API if token is configured and free API is disabled
+    return await generate_image_replicate(request, api_token)
+
+
+async def generate_image_pollinations(request: ImageGenerateRequest) -> ImageGenerateResponse:
+    """
+    Generate image using FREE Pollinations.ai API.
+    No API key required! Completely free and unlimited.
+    """
+    # URL-encode the prompt
+    encoded_prompt = quote(request.prompt)
+    
+    # Pollinations.ai API - completely FREE, no authentication needed
+    # Supports various models including Stable Diffusion
+    image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={request.width}&height={request.height}&nologo=true&seed={random.randint(1, 999999)}"
+    
+    # Verify the URL is accessible (optional - the URL itself is the image)
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        try:
+            # Just do a HEAD request to verify it's working
+            response = await client.head(image_url, follow_redirects=True)
+            if response.status_code != 200:
+                print(f"Warning: Pollinations API returned status {response.status_code}")
+        except Exception as e:
+            print(f"Warning: Could not verify Pollinations URL: {e}")
+    
+    # Generate heatmap data based on segments
+    heatmap_data = generate_heatmap_regions(request.segments, request.width, request.height)
+    
+    # Calculate segment contributions
+    segment_contributions = calculate_segment_contributions(request.segments)
+    
+    return ImageGenerateResponse(
+        session_id=request.session_id,
+        image_url=image_url,
+        image_width=request.width,
+        image_height=request.height,
+        heatmap_data=heatmap_data,
+        segment_contributions=segment_contributions,
+        generation_metadata={
+            "model": "pollinations-ai/stable-diffusion",
+            "provider": "pollinations.ai",
+            "free": True,
+            "prompt": request.prompt
+        },
+        timestamp=datetime.utcnow().isoformat()
+    )
+
+
+async def generate_image_replicate(request: ImageGenerateRequest, api_token: str) -> ImageGenerateResponse:
+    """
+    Generate image using Replicate API (Stable Diffusion) - requires API token.
+    """
     model = os.getenv("IMAGE_MODEL", "stability-ai/stable-diffusion:27b93a2413e7f36cd83da926f3656280b2931564ff050bf9575f1fdf9bcd7478")
     
     async with httpx.AsyncClient(timeout=120.0) as client:
@@ -75,7 +133,6 @@ async def generate_image(request: ImageGenerateRequest) -> ImageGenerateResponse
                 raise Exception(f"Image generation failed: {status_data.get('error', 'Unknown error')}")
             
             # Wait before polling again
-            import asyncio
             await asyncio.sleep(1)
     
     # Generate heatmap data based on segments
@@ -93,6 +150,7 @@ async def generate_image(request: ImageGenerateRequest) -> ImageGenerateResponse
         segment_contributions=segment_contributions,
         generation_metadata={
             "model": model,
+            "provider": "replicate",
             "inference_steps": request.num_inference_steps,
             "prediction_id": prediction_id
         },
