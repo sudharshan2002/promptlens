@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { Menu, X, Sun, Moon } from "lucide-react";
+import { Menu, X, Sun, Moon, User, LogOut, ChevronDown } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 
 interface NavigationProps {
-  currentPage: 'main' | 'dashboard' | 'features' | 'documentation' | 'support';
-  onNavigate: (page: 'main' | 'dashboard' | 'features' | 'documentation' | 'support') => void;
+  currentPage: 'main' | 'dashboard' | 'features' | 'documentation' | 'support' | 'auth';
+  onNavigate: (page: 'main' | 'dashboard' | 'features' | 'documentation' | 'support' | 'auth') => void;
   theme: 'light' | 'dark';
   onThemeToggle: () => void;
 }
@@ -11,6 +12,9 @@ interface NavigationProps {
 export function Navigation({ currentPage, onNavigate, theme, onThemeToggle }: NavigationProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  
+  const { user, isAuthenticated, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -19,6 +23,15 @@ export function Navigation({ currentPage, onNavigate, theme, onThemeToggle }: Na
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setShowUserMenu(false);
+    if (showUserMenu) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showUserMenu]);
 
   const menuItems = [
     { label: 'Features', page: 'features' as const },
@@ -113,6 +126,91 @@ export function Navigation({ currentPage, onNavigate, theme, onThemeToggle }: Na
             </div>
           </button>
 
+          {/* Auth Button or User Menu */}
+          {isAuthenticated && user ? (
+            <div className="relative hidden md:block">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowUserMenu(!showUserMenu);
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:opacity-80 liquid-transition"
+                style={{
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                }}
+              >
+                {user.avatarUrl ? (
+                  <img 
+                    src={user.avatarUrl} 
+                    alt={user.name}
+                    className="w-5 h-5 rounded-full object-cover"
+                  />
+                ) : (
+                  <div 
+                    className="w-5 h-5 rounded-full flex items-center justify-center"
+                    style={{ background: 'var(--accent-primary)', color: '#fff' }}
+                  >
+                    <span style={{ fontSize: '0.625rem', fontWeight: 600 }}>
+                      {user.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-primary)', fontWeight: 500 }}>
+                  {user.name.split(' ')[0]}
+                </span>
+                <ChevronDown size={12} style={{ color: 'var(--text-tertiary)' }} />
+              </button>
+
+              {/* User Dropdown Menu */}
+              {showUserMenu && (
+                <div 
+                  className="absolute right-0 top-full mt-2 w-48 rounded-xl overflow-hidden shadow-lg"
+                  style={{
+                    background: 'var(--bg-primary)',
+                    border: '1px solid var(--border-color)',
+                    zIndex: 100,
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                    <p style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+                      {user.name}
+                    </p>
+                    <p style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)' }}>
+                      {user.email}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setShowUserMenu(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-4 py-3 hover:bg-red-50 dark:hover:bg-red-900/20 liquid-transition"
+                    style={{ color: '#d70015', fontSize: '0.8125rem' }}
+                  >
+                    <LogOut size={14} />
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={() => onNavigate('auth')}
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:scale-105 liquid-transition"
+              style={{
+                background: 'var(--accent-primary)',
+                color: '#fff',
+                fontSize: '0.75rem',
+                fontWeight: 500,
+              }}
+            >
+              <User size={12} />
+              Sign In
+            </button>
+          )}
+
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -176,6 +274,67 @@ export function Navigation({ currentPage, onNavigate, theme, onThemeToggle }: Na
                 </button>
               );
             })}
+            
+            {/* Mobile Auth Button */}
+            <div className="py-3">
+              {isAuthenticated && user ? (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {user.avatarUrl ? (
+                      <img 
+                        src={user.avatarUrl} 
+                        alt={user.name}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div 
+                        className="w-8 h-8 rounded-full flex items-center justify-center"
+                        style={{ background: 'var(--accent-primary)', color: '#fff' }}
+                      >
+                        <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                          {user.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    <div>
+                      <p style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+                        {user.name}
+                      </p>
+                      <p style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)' }}>
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setIsMenuOpen(false);
+                    }}
+                    className="p-2 rounded-full"
+                    style={{ color: '#d70015' }}
+                  >
+                    <LogOut size={18} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    onNavigate('auth');
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl"
+                  style={{
+                    background: 'var(--accent-primary)',
+                    color: '#fff',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                  }}
+                >
+                  <User size={16} />
+                  Sign In
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -1,0 +1,11 @@
+{
+  "f8604951-3985-424e-8195-edc56e8ae91d": {
+    "email": "test@example.com",
+    "name": "Test User",
+    "hashed_password": "$2b$12$tKEkwoouE3gOFAn2o/ELgOqt1SFZYoWhBmzxAXyO0H6ozwluqdmba",
+    "provider": "local",
+    "avatar_url": null,
+    "created_at": "2026-01-08T20:18:36.296866",
+    "last_login": "2026-01-08T20:18:45.614118"
+  }
+}
